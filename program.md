@@ -67,13 +67,27 @@ After all iterations:
 ---
 
 ## Suggested Ideas to Try
-1. Switch estimator to GradientBoostingClassifier or XGBClassifier
-2. Add RSI (14-day) as a feature
-3. Add lagged intraday returns (t-1, t-2, t-3 days)
-4. Add day-of-week and month as calendar features
-5. Try `class_weight="balanced"` to handle class imbalance
-6. Add rolling correlation between stock return and oil return
-7. Feature selection: drop low-importance features
-8. Tune hyperparameters: increase `n_estimators`, adjust `max_depth`
-9. Add MACD signal as a feature
-10. Add Bollinger Band width as a volatility feature
+1)Switch estimator to GradientBoostingClassifier (after leakage fix)
+
+2)Add safe lagged features: volatility_lag1, oil_return_1d, oil_return_5d
+
+3)Add calendar features: Holiday flag, days since last earnings
+
+4)Try class_weight="balanced" to handle class imbalance
+
+5)Add safe rolling correlation: Between lagged stock and lagged oil returns only
+
+6)Feature selection: Drop low-importance features (use permutation importance)
+
+7)Hyperparameter tuning:
+
+  n_estimators: [100, 200, 400]
+  max_depth: [3, 5, 7]
+  learning_rate: [0.01, 0.05, 0.1]
+
+
+
+8)Price momentum indicator: (Close_t-1 / Close_t-5) - 1
+
+
+9)Track leakage impact: Run baseline with cleaned features first, measure performance drop
