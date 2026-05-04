@@ -64,39 +64,6 @@ def save_log(log):
         json.dump(log, f, indent=2)
 
 
-def prepare_splits(X, y):
-    """
-    Two-stage time-aware split:
-
-      Full data (100%)
-        └── Train pool  (first 80%)  ← used during AutoResearch
-              ├── Train  (first 80% of train pool = 64% of full)
-              └── Val    (last  20% of train pool = 16% of full)
-        └── Holdout test (last  20%) ← saved once, never touched again
-
-    Returns X_train, X_val, y_train, y_val.
-    Saves holdout to HOLDOUT_FILE on first call; reloads on subsequent calls.
-    """
-    holdout_idx = int(len(X) * 0.80)
-    X_pool, y_pool = X.iloc[:holdout_idx], y.iloc[:holdout_idx]
-    X_test, y_test = X.iloc[holdout_idx:], y.iloc[holdout_idx:]
-
-    # Save holdout once — never overwrite
-    if not os.path.exists(HOLDOUT_FILE):
-        pd.concat([X_test, y_test], axis=1).to_pickle(HOLDOUT_FILE)
-        print(f"Holdout test set saved to '{HOLDOUT_FILE}' "
-              f"({len(X_test)} rows). Do NOT use during AutoResearch.")
-    else:
-        print(f"Holdout test set already saved ({len(X_test)} rows held out).")
-
-    # Val split within train pool
-    val_idx = int(len(X_pool) * 0.80)
-    X_train, X_val = X_pool.iloc[:val_idx], X_pool.iloc[val_idx:]
-    y_train, y_val = y_pool.iloc[:val_idx], y_pool.iloc[val_idx:]
-
-    return X_train, X_val, y_train, y_val
-
-
 def main():
     description = sys.argv[1] if len(sys.argv) > 1 else "unnamed"
 
@@ -110,22 +77,21 @@ def main():
     set_timeout(RUNTIME_BUDGET)
 
     try:
-        # 1. Load data
-        print("Loading data via yfinance...")
-        final_df = build_dataset()
+        training_data = pd.read_csv('training_data.csv')
 
-        # 2. Features & target
-        X, y = get_features_and_target(final_df)
-        print(f"Full dataset  : {X.shape[0]} rows | "
-              f"Target balance: {y.mean():.3f} positive rate")
+        feature_cols = [
+        "Return_prev_5d", "Return_prev_10d", "Close_yesterday", 'Volatility',
+        "Oil_Open", "Oil_volume", 'Return_prev_5d_oil', 'Return_prev_10d_oil',
+        "Open", "Volume",
+        "DayOfWeek", "Month"
+      ]
 
-        # 3. Two-stage split
-        X_train, X_val, y_train, y_val = prepare_splits(X, y)
-        print(f"Train rows    : {len(X_train)} | "
-              f"Val rows: {len(X_val)} | "
-              f"Holdout rows: {len(X) - len(X_train) - len(X_val)}")
+        X = training_data[feature_cols]
+        y = training_data[['Target']]
 
-        # 4. Train
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        
+      # 4. Train
         print("Training model...")
         model = build_model()
         model.fit(X_train, y_train)
