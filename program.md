@@ -18,13 +18,10 @@ The dataset is split **once**, time-aware, before any AutoResearch begins:
 ```
 Full data (100%)
   ├── Train pool (first 80%)   ← AutoResearch uses only this
-  │     ├── Train (64% of full)
-  │     └── Val   (16% of full)   ← ROC-AUC optimized here
-  └── Holdout test (last 20%)  ← saved to holdout_test.pkl, NEVER touched
+  │
+  └── Val test (last 20%)  ← ROC-AUC optimized here
 ```
 
-The holdout is written to disk on the first `run.py` call and must not be
-used until all iterations are complete.
 
 ## Runtime Budget
 Each experiment has a **5-minute wall-clock budget**. If exceeded:
@@ -35,10 +32,12 @@ Each experiment has a **5-minute wall-clock budget**. If exceeded:
 ## Files
 | File | Purpose |
 |------|---------|
+| `training_data.csv` | The dataset that includes both predictors and the dependent variable |
 | `model.py` | Data loading, feature engineering, model definition — **edited each iteration** |
 | `run.py` | Trains model, evaluates ROC-AUC, enforces 5-min budget, logs to `experiments.json` |
 | `prepare.py` | Reads `experiments.json`, generates `performance.png` |
-| `evaluate_test.py` | Final step only — scores best model on holdout test set |
+| `evaluate_test.py` | Final step only — scores best model on the 20% validation subset |
+
 
 ---
 
@@ -61,7 +60,7 @@ Then enter the AutoResearch loop:
 
 After all iterations:
 1. Run `python prepare.py` → generates `performance.png`
-2. Run `python evaluate_test.py` → scores best model on holdout test set
+2. Run `python evaluate_test.py` → scores best model on validation subset
 3. Print a summary table of all experiments (kept / discarded / timeout)
 
 ---
@@ -69,17 +68,11 @@ After all iterations:
 ## Suggested Ideas to Try
 1)Switch estimator to GradientBoostingClassifier (after leakage fix)
 
-2)Add safe lagged features: volatility_lag1, oil_return_1d, oil_return_5d
+2)Try class_weight="balanced" to handle class imbalance
 
-3)Add calendar features: Holiday flag, days since last earnings
+3)Feature selection: Drop low-importance features (use permutation importance)
 
-4)Try class_weight="balanced" to handle class imbalance
-
-5)Add safe rolling correlation: Between lagged stock and lagged oil returns only
-
-6)Feature selection: Drop low-importance features (use permutation importance)
-
-7)Hyperparameter tuning:
+4)Hyperparameter tuning:
 
   n_estimators: [100, 200, 400]
   max_depth: [3, 5, 7]
@@ -87,7 +80,4 @@ After all iterations:
 
 
 
-8)Price momentum indicator: (Close_t-1 / Close_t-5) - 1
-
-
-9)Track leakage impact: Run baseline with cleaned features first, measure performance drop
+5)Track leakage impact: Run baseline with cleaned features first, measure performance drop
