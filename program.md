@@ -68,6 +68,5 @@ After all iterations:
   max_depth: [3, 5, 7]
   learning_rate: [0.01, 0.05, 0.1]
 
+5) Try multiple linear or polynomial regression and based on it understand which features are statistically significant predictors.
 
-
-5)Track leakage impact: Run baseline with cleaned features first, measure performance drop
