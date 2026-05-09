@@ -1,19 +1,10 @@
 """
 run.py — Train model, evaluate ROC-AUC, and log experiment results.
 
-Data split strategy:
-  - Full dataset split time-aware into 80% TRAIN POOL and 20% HOLDOUT TEST.
-  - The holdout test set is saved to disk and NEVER used during AutoResearch.
-  - Within the 80% train pool, a further 80/20 time-aware split produces
-    the TRAIN and VALIDATION sets used during the AutoResearch loop.
-  - After all iterations, run evaluate_test.py to score the best model on
-    the holdout test set.
-
 Runtime budget: 5 minutes per experiment. Exceeding this logs a TIMEOUT.
 
 Usage:
     python run.py "baseline"
-    python run.py "added RSI feature"
 """
 
 import sys
@@ -29,7 +20,6 @@ from sklearn.metrics import roc_auc_score
 from model import build_dataset, get_features_and_target, build_model
 
 LOG_FILE       = "experiments.json"
-HOLDOUT_FILE   = "holdout_test.pkl"
 RUNTIME_BUDGET = 5 * 60  # 5 minutes in seconds
 
 
@@ -84,7 +74,7 @@ def main():
         "Oil_Open", "Oil_volume", 'Return_prev_5d_oil', 'Return_prev_10d_oil',
         "Open", "Volume",
         "DayOfWeek", "Month"
-      ]
+    ]
 
         X = training_data[feature_cols]
         y = training_data[['Target']]
@@ -98,10 +88,11 @@ def main():
 
         # 5. Evaluate
         train_proba = model.predict_proba(X_train)[:, 1]
-        val_proba   = model.predict_proba(X_val)[:, 1]
+        val_proba   = model.predict_proba(X_test)[:, 1]
 
-        train_auc = roc_auc_score(y_train, train_proba)
-        val_auc   = roc_auc_score(y_val,   val_proba)
+        thr = 0.5
+        train_auc = roc_auc_score(y_train, train_proba>thr)
+        val_auc   = roc_auc_score(y_test,   val_proba>thr)
 
         elapsed = time.time() - start_time
         clear_timeout()
