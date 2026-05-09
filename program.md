@@ -9,18 +9,8 @@ Classify whether each day's **intraday return** for energy stocks will be **posi
 XOM, CVX, BP, CAT, SHEL, COP, CSUAY, PBR, ENB, MITSY, ITOCY
 
 ## Data Source
-- Fetched via `yfinance` (2018-01-01 to 2024-01-01)
-- Oil prices (CL=F) merged as external feature
+- csv file called "training_data.csv" that is in this repository 
 
-## Data Split Strategy
-The dataset is split **once**, time-aware, before any AutoResearch begins:
-
-```
-Full data (100%)
-  ├── Train pool (first 80%)   ← AutoResearch uses only this
-  │
-  └── Val test (last 20%)  ← ROC-AUC optimized here
-```
 
 
 ## Runtime Budget
