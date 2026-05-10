@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score
 
-from model import build_dataset, get_features_and_target, build_model
+from model import build_model
 
 LOG_FILE       = "experiments.json"
 RUNTIME_BUDGET = 5 * 60  # 5 minutes in seconds
